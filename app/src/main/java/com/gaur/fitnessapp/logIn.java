@@ -16,6 +16,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class logIn extends AppCompatActivity {
     private FirebaseAuth mAuth;
@@ -32,6 +33,14 @@ public class logIn extends AppCompatActivity {
         emailBox = findViewById(R.id.email_login);
         passwordBox = findViewById(R.id.password_login);
         bar = findViewById(R.id.progressBar_login);
+
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            Intent intent = new Intent(logIn.this, dashboard.class);
+            startActivity(intent);
+            finish();
+        }
     }
 
     public void signIn(View view) {
