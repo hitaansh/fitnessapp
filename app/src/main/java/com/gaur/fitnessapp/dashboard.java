@@ -16,12 +16,20 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class dashboard extends AppCompatActivity {
 
     FloatingActionButton uploadVideo;
     RecyclerView recyclerView;
+    DatabaseReference approvalReference;
+    Boolean clicked = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,6 +38,8 @@ public class dashboard extends AppCompatActivity {
 
         uploadVideo = findViewById(R.id.uploadVideo);
         recyclerView = findViewById(R.id.recyclerView);
+        approvalReference = FirebaseDatabase.getInstance().getReference("approvals");
+
 
         uploadVideo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -47,6 +57,39 @@ public class dashboard extends AppCompatActivity {
             @Override
             protected void onBindViewHolder(@NonNull viewHolder holder, int position, @NonNull fileModel model) {
                 holder.prepareExoPlayer(getApplication(), model.getTitle(), model.getvURL());
+
+                FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+                final String userID = firebaseUser.getUid();
+                final String postKey = getRef(position).getKey();
+
+                holder.getApprovalStatus(postKey, userID);
+
+                holder.approveButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        clicked = true;
+
+                        approvalReference.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                if(clicked) {
+                                    if(snapshot.child(postKey).hasChild(userID)) {
+                                        approvalReference.child(postKey).removeValue();
+                                    } else {
+                                        approvalReference.child(postKey).child(userID).setValue(true);
+                                    }
+                                    clicked = false;
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+
+                    }
+                });
             }
 
             @NonNull

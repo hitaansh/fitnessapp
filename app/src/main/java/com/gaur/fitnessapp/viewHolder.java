@@ -2,8 +2,10 @@ package com.gaur.fitnessapp;
 
 import android.app.Application;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -22,6 +24,11 @@ import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.w3c.dom.Text;
 
@@ -29,16 +36,20 @@ public class viewHolder extends RecyclerView.ViewHolder {
     SimpleExoPlayerView simpleExoPlayerView;
     SimpleExoPlayer simpleExoPlayer;
     TextView videoTitleView;
-
+    ImageView approveButton;
+    TextView approveText;
+    DatabaseReference approvalReference;
 
     public viewHolder(@NonNull View itemView) {
         super(itemView);
         videoTitleView = itemView.findViewById(R.id.title);
         simpleExoPlayerView = itemView.findViewById(R.id.exoPlayerView);
+        approveButton = itemView.findViewById(R.id.approveButton);
+        approveText = itemView.findViewById(R.id.approveText);
 
     }
 
-    void prepareExoPlayer(Application application, String vTitle, String vUrl) {
+    public void prepareExoPlayer(Application application, String vTitle, String vUrl) {
         try {
 
             videoTitleView.setText(vTitle);
@@ -63,5 +74,28 @@ public class viewHolder extends RecyclerView.ViewHolder {
             Log.d("ExoPlayer Crashed", E.getMessage().toString());
         }
     }
+
+    public void getApprovalStatus(final String postKey, final String userID) {
+        approvalReference = FirebaseDatabase.getInstance().getReference("approvals");
+        approvalReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int approvalCount = (int)snapshot.child(postKey).getChildrenCount();
+                approveText.setText(approvalCount + " approvals");
+
+                if (snapshot.child(postKey).hasChild(userID)) {
+                    approveButton.setImageResource(R.drawable.approve_green);
+                } else {
+                    approveButton.setImageResource(R.drawable.approve_black);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
 
 }
